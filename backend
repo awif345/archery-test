@@ -1,0 +1,44 @@
+# backend/app.py
+
+from flask import Flask, request, jsonify
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_cors import CORS
+import os
+
+app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_secret_key')
+CORS(app)
+jwt = JWTManager(app)
+
+users = {}  # Temporary user storage, replace with a database in production
+
+@app.route('/')
+def home():
+    return "Welcome to the Archery Tuning App!"
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    if username in users:
+        return jsonify({"msg": "User already exists"}), 400
+    users[username] = password
+    return jsonify({"msg": "User registered successfully"}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    if users.get(username) != password:
+        return jsonify({"msg": "Invalid credentials"}), 401
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token), 200
+
+@app.route('/analyze', methods=['POST'])
+@jwt_required()
+def analyze():
+    # Placeholder for video analysis
+    return jsonify({"msg": "Video analysis feature coming soon!"}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
